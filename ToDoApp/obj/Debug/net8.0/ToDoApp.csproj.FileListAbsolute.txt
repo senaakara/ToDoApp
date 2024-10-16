@@ -109,3 +109,8 @@
 /Users/senakara/Desktop/ToDoApp/ToDoApp/bin/Debug/net8.0/tr/Microsoft.CodeAnalysis.Workspaces.resources.dll
 /Users/senakara/Desktop/ToDoApp/ToDoApp/bin/Debug/net8.0/zh-Hans/Microsoft.CodeAnalysis.Workspaces.resources.dll
 /Users/senakara/Desktop/ToDoApp/ToDoApp/bin/Debug/net8.0/zh-Hant/Microsoft.CodeAnalysis.Workspaces.resources.dll
+/Users/senakara/Desktop/ToDoApp/ToDoApp/bin/Debug/net8.0/Microsoft.OpenApi.dll
+/Users/senakara/Desktop/ToDoApp/ToDoApp/bin/Debug/net8.0/Swashbuckle.AspNetCore.Swagger.dll
+/Users/senakara/Desktop/ToDoApp/ToDoApp/bin/Debug/net8.0/Swashbuckle.AspNetCore.SwaggerGen.dll
+/Users/senakara/Desktop/ToDoApp/ToDoApp/bin/Debug/net8.0/Swashbuckle.AspNetCore.SwaggerUI.dll
+/Users/senakara/Desktop/ToDoApp/ToDoApp/obj/Debug/net8.0/ToDoApp.MvcApplicationPartsAssemblyInfo.cs
