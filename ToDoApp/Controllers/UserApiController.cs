@@ -4,11 +4,11 @@ using System.Collections.Generic;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UserController : ControllerBase
+public class UserApiController : ControllerBase
 {
     private readonly IUserRepository _repository;
 
-    public UserController(IUserRepository repository)
+    public UserApiController(IUserRepository repository)
     {
         _repository = repository;
     }

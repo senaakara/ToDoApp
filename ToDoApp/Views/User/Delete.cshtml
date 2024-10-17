@@ -1,0 +1,19 @@
+@model User
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Kullanıcı Sil</h2>
+
+<div>
+    <h3>Bu kullanıcıyı silmek istediğinizden emin misiniz?</h3>
+    <div>
+        <h4>@Model.Username</h4>
+        <p>@Model.Email</p>
+    </div>
+    <form asp-action="DeleteConfirmed" method="post">
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-danger">Sil</button>
+        <a href="@Url.Action("Index", "User")" class="btn btn-secondary">İptal</a>
+    </form>
+</div>

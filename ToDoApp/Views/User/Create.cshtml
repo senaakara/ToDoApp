@@ -1,0 +1,26 @@
+@model User
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Yeni Kullanıcı Ekle</h2>
+
+<form asp-action="Create" method="post">
+    <div class="mb-3">
+        <label for="Username" class="form-label">Kullanıcı Adı</label>
+        <input type="text" class="form-control" asp-for="Username" />
+        <span asp-validation-for="Username" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label for="Email" class="form-label">Email</label>
+        <input type="email" class="form-control" asp-for="Email" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label for="PasswordHash" class="form-label">Şifre</label>
+        <input type="password" class="form-control" asp-for="PasswordHash" />
+        <span asp-validation-for="PasswordHash" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Kaydet</button>
+</form>
+

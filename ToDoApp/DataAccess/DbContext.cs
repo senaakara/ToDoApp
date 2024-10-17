@@ -11,15 +11,13 @@ public class ApplicationDbContext : DbContext
     public DbSet<ToDoItem> ToDoItems { get; set; }  // ToDoItem modeli için DbSet
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
-{
-    // ToDoItem ve User arasında bire çok ilişki
-    modelBuilder.Entity<ToDoItem>()
-        .HasOne(t => t.User)           // Her ToDoItem bir User'a bağlı
-        .WithMany(u => u.ToDoItems)    // Bir User birçok ToDoItem'a sahip olabilir
-        .HasForeignKey(t => t.UserId)  // ToDoItem, UserId'ye bağlı
-        .OnDelete(DeleteBehavior.SetNull);  // Silindiğinde null yap
+    {
+        // İlişkiyi yapılandırın: Bir User'ın birden fazla ToDoItem'ı olabilir
+        modelBuilder.Entity<ToDoItem>()
+            .HasOne(t => t.User)           // Her ToDoItem bir User'a ait
+            .WithMany(u => u.ToDoItems)    // Bir User birden fazla ToDoItem'a sahip olabilir
+            .HasForeignKey(t => t.UserId); // ToDoItem, UserId ile User'a bağlıdır
 
-    base.OnModelCreating(modelBuilder);
-}
-
+        base.OnModelCreating(modelBuilder);
+    }
 }
