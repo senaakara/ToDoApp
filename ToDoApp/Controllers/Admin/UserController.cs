@@ -43,12 +43,13 @@ public class UserController : Controller
     {
         if (ModelState.IsValid)
         {
-            await _repository.AddAsync(user);
-            return RedirectToAction(nameof(Index));
+            await _repository.AddAsync(user); // Veritabanına kullanıcı eklenir
+            return RedirectToAction(nameof(Index)); // Başarılı olursa listeye geri yönlendirir
         }
 
-        return View(user);  // Hatalıysa aynı sayfayı döndür ve hataları göster
+        return View(user); // Hatalıysa form tekrar yüklenir
     }
+
 
     // Kullanıcı düzenleme sayfası (GET)
     public async Task<IActionResult> Edit(int id)
@@ -94,7 +95,7 @@ public class UserController : Controller
     }
 
     // Kullanıcı silme işlemi (POST)
-    [HttpPost, ActionName("Delete")]
+    [HttpPost, ActionName("DeleteConfirmed")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
