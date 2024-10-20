@@ -42,4 +42,8 @@ public class ToDoItemRepository : IToDoItemRepository
             await _context.SaveChangesAsync();
         }
     }
+    public async Task<bool> ExistsAsync(int id)
+    {
+        return await _context.ToDoItems.AnyAsync(e => e.Id == id);
+    }
 }

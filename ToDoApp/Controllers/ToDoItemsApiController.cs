@@ -5,11 +5,11 @@ using System.Collections.Generic;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ToDoItemController : ControllerBase
+public class ToDoItemApiController : ControllerBase
 {
     private readonly IToDoItemRepository _repository;
 
-    public ToDoItemController(IToDoItemRepository repository)
+    public ToDoItemApiController(IToDoItemRepository repository)
     {
         _repository = repository;
     }

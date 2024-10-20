@@ -34,6 +34,22 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvU2hhcmVkL19WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[/Users/senakara/Desktop/ToDoApp/ToDoApp/Views/ToDoItem/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVG9Eb0l0ZW0vQ3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/senakara/Desktop/ToDoApp/ToDoApp/Views/ToDoItem/Delete.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVG9Eb0l0ZW0vRGVsZXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/senakara/Desktop/ToDoApp/ToDoApp/Views/ToDoItem/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVG9Eb0l0ZW0vRWRpdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/senakara/Desktop/ToDoApp/ToDoApp/Views/ToDoItem/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVG9Eb0l0ZW0vSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [/Users/senakara/Desktop/ToDoApp/ToDoApp/Views/User/Create.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3MvVXNlci9DcmVhdGUuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 

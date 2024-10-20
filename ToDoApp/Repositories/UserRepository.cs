@@ -42,4 +42,9 @@ public class UserRepository : IUserRepository
             await _context.SaveChangesAsync();
         }
     }
+
+    public async Task<bool> ExistsAsync(int id)
+    {
+        return await _context.Users.AnyAsync(e => e.Id == id);
+    }
 }

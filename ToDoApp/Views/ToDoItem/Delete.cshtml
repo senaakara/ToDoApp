@@ -1,0 +1,22 @@
+@model ToDoItem
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@{
+    ViewData["Title"] = "Yapılacak Görevi Sil";
+}
+<h2>Görevi Sil</h2>
+
+
+<p>Bu ToDo'yu silmek istediğinizden emin misiniz?</p>
+
+<div>
+    <h4>@Model.Title</h4>
+    <p>@Model.Description</p>
+</div>
+
+<form asp-action="DeleteConfirmed" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Sil</button>
+    <a href="@Url.Action("Index", "ToDoItem")" class="btn btn-secondary">İptal</a>
+</form>

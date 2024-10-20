@@ -1,0 +1,56 @@
+@model ToDoItem
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Görevi Düzenle</h2>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label for="Title" class="form-label">Başlık</label>
+        <input type="text" class="form-control" asp-for="Title" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label for="Description" class="form-label">Açıklama</label>
+        <textarea class="form-control" asp-for="Description"></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label for="DueDate" class="form-label">Son Tarih</label>
+        <input type="date" class="form-control" asp-for="DueDate" />
+        <span asp-validation-for="DueDate" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label for="IsCompleted" class="form-label">Tamamlandı mı?</label>
+        <input type="checkbox" asp-for="IsCompleted" />
+        <span asp-validation-for="IsCompleted" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+    <label for="UserId" class="form-label">Kullanıcı Seç</label>
+    <select class="form-control" asp-for="UserId">
+        @foreach (var user in ViewBag.Users)
+        {
+            if (user.Id == Model.UserId)
+            {
+                <option value="@user.Id" selected>@user.Username</option>
+            }
+            else
+            {
+                <option value="@user.Id">@user.Username</option>
+            }
+        }
+    </select>
+    <span asp-validation-for="UserId" class="text-danger"></span>
+</div>
+
+    <button type="submit" class="btn btn-primary">Güncelle</button>
+</form>
+
+<a href="@Url.Action("Index", "ToDoItem")" class="btn btn-secondary">Geri Dön</a>
