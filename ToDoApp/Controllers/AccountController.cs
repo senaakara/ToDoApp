@@ -37,7 +37,7 @@ public class AccountController : Controller
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password) // Şifreyi hashleyin
             };
 
-            var result = await _userManager.CreateAsync(user, model.Password);
+            var result = await _userManager.CreateAsync(user, user.PasswordHash);
 
             if (result.Succeeded)
             {
