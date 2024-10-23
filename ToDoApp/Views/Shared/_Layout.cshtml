@@ -34,6 +34,26 @@
                     <a class="nav-link" href="/Home/Privacy">Gizlilik</a>
                 </li>
             </ul>
+
+            <ul class="navbar-nav">
+    @if (!User.Identity.IsAuthenticated)
+    {
+        <!-- Giriş yap ve Kayıt ol butonları -->
+        <li class="nav-item">
+            <a class="nav-link" asp-area="" asp-controller="Account" asp-action="Login">Giriş Yap</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" asp-area="" asp-controller="Account" asp-action="Register">Kayıt Ol</a>
+        </li>
+    }
+    else
+    {
+        <li class="nav-item">
+            <a class="nav-link" asp-area="" asp-controller="Account" asp-action="Logout">Çıkış Yap</a>
+        </li>
+    }
+</ul>
+
         </div>
     </div>
 </nav>

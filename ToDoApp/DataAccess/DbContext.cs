@@ -1,13 +1,14 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-public class ApplicationDbContext : DbContext
-{
+public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<int>, int>{
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
     {
     }
 
-    public DbSet<User> Users { get; set; }
+    
     public DbSet<ToDoItem> ToDoItems { get; set; }  // ToDoItem modeli için DbSet
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

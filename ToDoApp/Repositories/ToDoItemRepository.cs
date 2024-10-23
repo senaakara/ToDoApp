@@ -46,4 +46,10 @@ public class ToDoItemRepository : IToDoItemRepository
     {
         return await _context.ToDoItems.AnyAsync(e => e.Id == id);
     }
+
+    public async Task<IEnumerable<ToDoItem>> GetByUserIdAsync(int userId)
+    {
+        return await _context.ToDoItems.Where(t => t.UserId == userId).ToListAsync();
+    }
+
 }

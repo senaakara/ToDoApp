@@ -21,7 +21,7 @@
         @foreach (var user in Model)
         {
             <tr>
-                <td>@user.Username</td>
+                <td>@user.UserName</td>
                 <td>@user.Email</td>
                 <td>
                     <a href="@Url.Action("Edit", "User", new { id = user.Id })" class="btn btn-warning btn-sm">Düzenle</a>

@@ -114,3 +114,9 @@
 /Users/senakara/Desktop/ToDoApp/ToDoApp/bin/Debug/net8.0/Swashbuckle.AspNetCore.SwaggerGen.dll
 /Users/senakara/Desktop/ToDoApp/ToDoApp/bin/Debug/net8.0/Swashbuckle.AspNetCore.SwaggerUI.dll
 /Users/senakara/Desktop/ToDoApp/ToDoApp/obj/Debug/net8.0/ToDoApp.MvcApplicationPartsAssemblyInfo.cs
+/Users/senakara/Desktop/ToDoApp/ToDoApp/bin/Debug/net8.0/Microsoft.AspNetCore.Cryptography.Internal.dll
+/Users/senakara/Desktop/ToDoApp/ToDoApp/bin/Debug/net8.0/Microsoft.AspNetCore.Cryptography.KeyDerivation.dll
+/Users/senakara/Desktop/ToDoApp/ToDoApp/bin/Debug/net8.0/Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll
+/Users/senakara/Desktop/ToDoApp/ToDoApp/bin/Debug/net8.0/Microsoft.Extensions.Identity.Core.dll
+/Users/senakara/Desktop/ToDoApp/ToDoApp/bin/Debug/net8.0/Microsoft.Extensions.Identity.Stores.dll
+/Users/senakara/Desktop/ToDoApp/ToDoApp/bin/Debug/net8.0/BCrypt.Net-Next.dll
