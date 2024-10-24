@@ -56,39 +56,54 @@ public class AccountController : Controller
         return View(model);
     }
 
-    // GET: Account/Login
     [HttpGet]
     public IActionResult Login()
     {
         return View();
     }
 
-    // POST: Account/Login
     [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Login(Login model)
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> Login(Login model)
+{
+    if (ModelState.IsValid)
     {
-        if (ModelState.IsValid)
+        // Kullanıcıyı e-posta adresine göre bul
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user != null)
         {
-            // Kullanıcıyı e-posta veya kullanıcı adı ile buluyoruz
-            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+            // Bulduğumuz kullanıcının UserName'ini kullanarak giriş yap
+            var result = await _signInManager.PasswordSignInAsync(user.UserName, user.PasswordHash, model.RememberMe, lockoutOnFailure: false);
 
             if (result.Succeeded)
             {
-                return RedirectToAction("Index", "ToDoItem");  // Giriş sonrası yönlendirme
+                return RedirectToAction("Index", "Home");
             }
-
-            ModelState.AddModelError(string.Empty, "Giriş başarısız. Lütfen bilgilerinizi kontrol edin.");
+            else if (result.IsLockedOut)
+            {
+                ModelState.AddModelError(string.Empty, "Hesabınız kilitli.");
+                return View("Lockout");
+            }
+            else
+            {
+                ModelState.AddModelError(string.Empty, "Geçersiz giriş denemesi.");
+            }
         }
-
-        return View(model);
+        else
+        {
+            ModelState.AddModelError(string.Empty, "E-posta adresi kayıtlı değil.");
+        }
     }
+
+    return View(model);
+}
 
     // POST: Account/Logout
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
+        // Kullanıcıyı çıkış yaptırma
         await _signInManager.SignOutAsync();
         return RedirectToAction("Index", "Home");
     }

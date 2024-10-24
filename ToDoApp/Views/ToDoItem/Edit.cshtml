@@ -32,24 +32,6 @@
         <span asp-validation-for="IsCompleted" class="text-danger"></span>
     </div>
 
-    <div class="mb-3">
-    <label for="UserId" class="form-label">Kullanıcı Seç</label>
-    <select class="form-control" asp-for="UserId">
-        @foreach (var user in ViewBag.Users)
-        {
-            if (user.Id == Model.UserId)
-            {
-                <option value="@user.Id" selected>@user.Username</option>
-            }
-            else
-            {
-                <option value="@user.Id">@user.Username</option>
-            }
-        }
-    </select>
-    <span asp-validation-for="UserId" class="text-danger"></span>
-</div>
-
     <button type="submit" class="btn btn-primary">Güncelle</button>
 </form>
 

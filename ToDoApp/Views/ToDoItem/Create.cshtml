@@ -6,7 +6,7 @@
     ViewData["Title"] = "Yapılacak Görev Ekle";
 }
 
-<h2>Yapılacak Görev Ekle</h2>
+<h2>@ViewData["Title"]</h2>
 
 <form asp-controller="ToDoItem" asp-action="Create" method="post">
     <div class="mb-3">
@@ -32,27 +32,6 @@
         <input type="checkbox" asp-for="IsCompleted" />
         <span asp-validation-for="IsCompleted" class="text-danger"></span>
     </div>
-
-    <div class="mb-3">
-    <label for="UserId" class="form-label">Kullanıcı Seç</label>
-    <select class="form-control" asp-for="UserId">
-        @foreach (var user in ViewBag.Users)
-        {
-            // Hem Model hem de UserId null değilse kontrol et
-            if (Model != null && Model.UserId != null && user.Id == Model.UserId)
-            {
-                <option value="@user.Id" selected>@user.Username</option>
-            }
-            else
-            {
-                <option value="@user.Id">@user.Username</option>
-            }
-        }
-    </select>
-    <span asp-validation-for="UserId" class="text-danger"></span>
-</div>
-
-
 
     <button type="submit" class="btn btn-primary">Kaydet</button>
 </form>

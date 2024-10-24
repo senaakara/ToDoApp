@@ -1,15 +1,14 @@
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;  // Kullanıcı bilgilerini almak için gerekli
-
-[Authorize]  // Giriş yapılmasını zorunlu hale getiriyoruz
+using Microsoft.AspNetCore.Authorization;
+[Authorize]
 public class ToDoItemController : Controller
 {
     private readonly IToDoItemRepository _repository;
-    private readonly UserManager<User> _userManager;  // Kullanıcının bilgilerini almak için
+    private readonly UserManager<User> _userManager; // Kullanıcıyı almak için
 
     public ToDoItemController(IToDoItemRepository repository, UserManager<User> userManager)
     {
@@ -17,35 +16,66 @@ public class ToDoItemController : Controller
         _userManager = userManager;
     }
 
-    // GET: ToDoItem (Sadece giriş yapan kullanıcının to-do'larını getiriyoruz)
+    // GET: ToDoItem
     public async Task<IActionResult> Index()
     {
-        var userId = _userManager.GetUserId(User);  // Giriş yapan kullanıcının UserId'sini alıyoruz
-        var toDoItems = await _repository.GetByUserIdAsync(int.Parse(userId));  // Kullanıcının to-do'larını getiriyoruz
+        // Giriş yapan kullanıcının ID'sini al
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return RedirectToAction("Login", "Account"); // Eğer giriş yapılmadıysa login'e yönlendir
+        }
+
+        // Sadece bu kullanıcının to-do'larını getirin
+        var toDoItems = await _repository.GetToDoItemsByUserIdAsync(user.Id);
         return View(toDoItems);
     }
 
-    // GET: ToDoItem/Create (Yeni to-do oluşturma formu)
+    // GET: ToDoItem/Details/5
+    public async Task<IActionResult> Details(int? id)
+    {
+        if (id == null)
+        {
+            return NotFound();
+        }
+
+        var user = await _userManager.GetUserAsync(User);
+        var toDoItem = await _repository.GetByIdAsync(id.Value);
+
+        if (toDoItem == null || toDoItem.UserId != user.Id)
+        {
+            return NotFound(); // Erişim engellenir
+        }
+
+        return View(toDoItem);
+    }
+
+    // GET: ToDoItem/Create
     public IActionResult Create()
     {
         return View();
     }
 
-    // POST: ToDoItem/Create (Yeni to-do oluştur)
+    // POST: ToDoItem/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(ToDoItem toDoItem)
     {
-        if (ModelState.IsValid)
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
         {
-            var userId = _userManager.GetUserId(User);  // Giriş yapan kullanıcının UserId'sini alıyoruz
-            toDoItem.UserId = int.Parse(userId);  // To-do'ya ait kullanıcı ID'yi ekliyoruz
+            return RedirectToAction("Login", "Account"); // Giriş yapılmadıysa yönlendirin
+        }
 
-            // DateTime'i UTC'ye çeviriyoruz
+        if (ModelState.IsValid)
+        {   
             if (toDoItem.DueDate.HasValue)
             {
+                // DueDate'i UTC'ye çevir
                 toDoItem.DueDate = DateTime.SpecifyKind(toDoItem.DueDate.Value, DateTimeKind.Utc);
             }
+            // Giriş yapan kullanıcının ID'sini toDoItem'a bağla
+            toDoItem.UserId = user.Id;
 
             await _repository.AddAsync(toDoItem);
             return RedirectToAction(nameof(Index));
@@ -54,7 +84,7 @@ public class ToDoItemController : Controller
         return View(toDoItem);
     }
 
-    // GET: ToDoItem/Edit/5 (To-do düzenleme sayfası)
+    // GET: ToDoItem/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -63,15 +93,24 @@ public class ToDoItemController : Controller
         }
 
         var toDoItem = await _repository.GetByIdAsync(id.Value);
-        if (toDoItem == null || toDoItem.UserId != int.Parse(_userManager.GetUserId(User)))  // Sadece kendi to-do'sunu düzenlemesine izin veriyoruz
+        if (toDoItem == null)
         {
-            return Unauthorized();  // Yetkisiz işlem
+            return NotFound();
+        }
+
+        // Giriş yapan kullanıcıyı al
+        var user = await _userManager.GetUserAsync(User);
+
+        // Kullanıcı bu görevi düzenleyebiliyor mu kontrol et
+        if (user == null || toDoItem.UserId != user.Id)
+        {
+            return Unauthorized(); // Yetkisi yoksa
         }
 
         return View(toDoItem);
     }
 
-    // POST: ToDoItem/Edit/5 (To-do düzenleme işlemi)
+    // POST: ToDoItem/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, ToDoItem toDoItem)
@@ -82,21 +121,27 @@ public class ToDoItemController : Controller
         }
 
         if (ModelState.IsValid)
-        {
+        {   
+
+            if (toDoItem.DueDate.HasValue)
+            {
+                // DueDate'i UTC'ye çevir
+                toDoItem.DueDate = DateTime.SpecifyKind(toDoItem.DueDate.Value, DateTimeKind.Utc);
+            }
+            
+
             try
             {
-                // DateTime'i UTC'ye çeviriyoruz
-                if (toDoItem.DueDate.HasValue)
+                // Giriş yapan kullanıcıyı al
+                var user = await _userManager.GetUserAsync(User);
+                
+                // Kullanıcı bu görevi düzenleyebiliyor mu kontrol et
+                if (user == null || toDoItem.UserId != user.Id)
                 {
-                    toDoItem.DueDate = DateTime.SpecifyKind(toDoItem.DueDate.Value, DateTimeKind.Utc);
+                    return Unauthorized(); // Yetkisi yoksa
                 }
 
-                var userId = _userManager.GetUserId(User);  // Giriş yapan kullanıcının UserId'sini alıyoruz
-                if (toDoItem.UserId != int.Parse(userId))  // Kullanıcının sadece kendi to-do'sunu düzenlemesini sağlıyoruz
-                {
-                    return Unauthorized();
-                }
-
+                // Görevi güncelle
                 await _repository.UpdateAsync(toDoItem);
             }
             catch (DbUpdateConcurrencyException)
@@ -124,27 +169,41 @@ public class ToDoItemController : Controller
             return NotFound();
         }
 
+        var user = await _userManager.GetUserAsync(User);
         var toDoItem = await _repository.GetByIdAsync(id.Value);
-        if (toDoItem == null || toDoItem.UserId != int.Parse(_userManager.GetUserId(User)))  // Kullanıcının sadece kendi to-do'sunu silmesine izin veriyoruz
+
+        if (toDoItem == null || toDoItem.UserId != user.Id)
         {
-            return Unauthorized();
+            return NotFound(); // Kendi ToDoItem'ı değilse erişim engellenir
         }
 
         return View(toDoItem);
     }
 
-    // POST: ToDoItem/Delete/5
-    [HttpPost, ActionName("Delete")]
+    // POST: ToDoItem/DeleteConfirmed/5
+    [HttpPost, ActionName("DeleteConfirmed")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
+        // ToDoItem'ı alıyoruz
         var toDoItem = await _repository.GetByIdAsync(id);
-        if (toDoItem.UserId != int.Parse(_userManager.GetUserId(User)))  // Sadece kendi to-do'sunu silebilmesini sağlıyoruz
+        
+        if (toDoItem == null)
         {
-            return Unauthorized();
+            return NotFound();
         }
 
+        // Giriş yapmış kullanıcının Id'sini alıyoruz
+        var user = await _userManager.GetUserAsync(User);
+
+        if (user == null || toDoItem.UserId != user.Id)
+        {
+            return Unauthorized(); // Eğer kullanıcı giriş yapmamışsa veya yetkisi yoksa
+        }
+
+        // ToDoItem'ı siliyoruz
         await _repository.DeleteAsync(id);
+
         return RedirectToAction(nameof(Index));
     }
 }

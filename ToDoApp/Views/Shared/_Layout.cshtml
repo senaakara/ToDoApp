@@ -35,7 +35,7 @@
                 </li>
             </ul>
 
-            <ul class="navbar-nav">
+    <ul class="navbar-nav">
     @if (!User.Identity.IsAuthenticated)
     {
         <!-- Giriş yap ve Kayıt ol butonları -->
@@ -49,10 +49,14 @@
     else
     {
         <li class="nav-item">
-            <a class="nav-link" asp-area="" asp-controller="Account" asp-action="Logout">Çıkış Yap</a>
+            <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="form-inline">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="nav-link btn btn-link" style="color:white; text-decoration:none;">Çıkış Yap</button>
+            </form>
         </li>
     }
 </ul>
+
 
         </div>
     </div>
