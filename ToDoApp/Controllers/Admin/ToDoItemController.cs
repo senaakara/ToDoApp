@@ -84,7 +84,6 @@ public class ToDoItemController : Controller
         return View(toDoItem);
     }
 
-    // GET: ToDoItem/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -92,25 +91,17 @@ public class ToDoItemController : Controller
             return NotFound();
         }
 
-        var toDoItem = await _repository.GetByIdAsync(id.Value);
-        if (toDoItem == null)
-        {
-            return NotFound();
-        }
-
-        // Giriş yapan kullanıcıyı al
         var user = await _userManager.GetUserAsync(User);
+        var toDoItem = await _repository.GetByIdAsync(id.Value);
 
-        // Kullanıcı bu görevi düzenleyebiliyor mu kontrol et
-        if (user == null || toDoItem.UserId != user.Id)
+        if (toDoItem == null || toDoItem.UserId != user.Id)
         {
-            return Unauthorized(); // Yetkisi yoksa
+            return Unauthorized();
         }
 
         return View(toDoItem);
     }
 
-    // POST: ToDoItem/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, ToDoItem toDoItem)
@@ -120,29 +111,28 @@ public class ToDoItemController : Controller
             return NotFound();
         }
 
+        var user = await _userManager.GetUserAsync(User);
+        var existingToDoItem = await _repository.GetByIdAsync(id);
+
+        if (existingToDoItem == null || existingToDoItem.UserId != user.Id)
+        {
+            return Unauthorized();
+        }
+
         if (ModelState.IsValid)
-        {   
-
-            if (toDoItem.DueDate.HasValue)
-            {
-                // DueDate'i UTC'ye çevir
-                toDoItem.DueDate = DateTime.SpecifyKind(toDoItem.DueDate.Value, DateTimeKind.Utc);
-            }
-            
-
+        {
             try
             {
-                // Giriş yapan kullanıcıyı al
-                var user = await _userManager.GetUserAsync(User);
-                
-                // Kullanıcı bu görevi düzenleyebiliyor mu kontrol et
-                if (user == null || toDoItem.UserId != user.Id)
+                existingToDoItem.Title = toDoItem.Title;
+                existingToDoItem.Description = toDoItem.Description;
+                existingToDoItem.IsCompleted = toDoItem.IsCompleted;
+                if (toDoItem.DueDate.HasValue)
                 {
-                    return Unauthorized(); // Yetkisi yoksa
+                    existingToDoItem.DueDate = DateTime.SpecifyKind(toDoItem.DueDate.Value, DateTimeKind.Utc);
                 }
 
-                // Görevi güncelle
-                await _repository.UpdateAsync(toDoItem);
+                await _repository.UpdateAsync(existingToDoItem);
+                return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -155,7 +145,6 @@ public class ToDoItemController : Controller
                     throw;
                 }
             }
-            return RedirectToAction(nameof(Index));
         }
 
         return View(toDoItem);

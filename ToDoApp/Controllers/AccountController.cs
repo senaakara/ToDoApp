@@ -63,40 +63,29 @@ public class AccountController : Controller
     }
 
     [HttpPost]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> Login(Login model)
-{
-    if (ModelState.IsValid)
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Login(Login model)
     {
-        // Kullanıcıyı e-posta adresine göre bul
-        var user = await _userManager.FindByEmailAsync(model.Email);
-        if (user != null)
+        if (ModelState.IsValid)
         {
-            // Bulduğumuz kullanıcının UserName'ini kullanarak giriş yap
-            var result = await _signInManager.PasswordSignInAsync(user.UserName, user.PasswordHash, model.RememberMe, lockoutOnFailure: false);
+            var user = await _userManager.FindByEmailAsync(model.Email);
 
-            if (result.Succeeded)
+            if (user != null)
             {
-                return RedirectToAction("Index", "Home");
+                var result = await _signInManager.PasswordSignInAsync(user.UserName, user.PasswordHash, model.RememberMe, lockoutOnFailure: false);
+
+                if (result.Succeeded)
+                {
+                    return RedirectToAction("Index", "ToDoItem");
+                }
             }
-            else if (result.IsLockedOut)
-            {
-                ModelState.AddModelError(string.Empty, "Hesabınız kilitli.");
-                return View("Lockout");
-            }
-            else
-            {
-                ModelState.AddModelError(string.Empty, "Geçersiz giriş denemesi.");
-            }
+            
+            ModelState.AddModelError(string.Empty, "Giriş başarısız. Lütfen bilgilerinizi kontrol edin.");
         }
-        else
-        {
-            ModelState.AddModelError(string.Empty, "E-posta adresi kayıtlı değil.");
-        }
+
+        return View(model);
     }
 
-    return View(model);
-}
 
     // POST: Account/Logout
     [HttpPost]
