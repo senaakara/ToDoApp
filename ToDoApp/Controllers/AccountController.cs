@@ -1,29 +1,27 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 
+using BCrypt.Net;
 
 public class AccountController : Controller
 {
-    private readonly UserManager<User> _userManager;
+    private readonly IUserRepository _userRepository;
     private readonly SignInManager<User> _signInManager;
 
-    public AccountController(UserManager<User> userManager, SignInManager<User> signInManager)
+    public AccountController(IUserRepository userRepository, SignInManager<User> signInManager)
     {
-        _userManager = userManager;
+        _userRepository = userRepository;
         _signInManager = signInManager;
     }
 
-    // GET: Account/Register
+
     [HttpGet]
     public IActionResult Register()
     {
         return View();
     }
 
-    // POST: Account/Register
     [HttpPost]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(Register model)
     {
         if (ModelState.IsValid)
@@ -32,29 +30,21 @@ public class AccountController : Controller
             {
                 UserName = model.UserName,
                 Email = model.Email,
-                Role = "User",  // Varsayılan rolü atıyoruz
+                Role = "User",
                 SecurityStamp = Guid.NewGuid().ToString(),
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password) // Şifreyi hashleyin
-            };
+            }; 
 
-            var result = await _userManager.CreateAsync(user, user.PasswordHash);
+            // Kullanıcıyı veritabanına kaydedin
+            await _userRepository.AddAsync(user);
 
-            if (result.Succeeded)
-            {
-                // Kullanıcı başarılı bir şekilde oluşturulduysa giriş işlemini yapıyoruz
-                await _signInManager.SignInAsync(user, isPersistent: false);
-                return RedirectToAction("Index", "ToDoItem");  // Kayıt sonrası yönlendirme
-            }
-
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
+            // Kullanıcıyı oturum açmış şekilde sisteme alın
+            await _signInManager.SignInAsync(user, isPersistent: false);
+            return RedirectToAction("Index", "Home");
         }
-
-        // Eğer model hataları varsa geri döner
         return View(model);
     }
+
 
     [HttpGet]
     public IActionResult Login()
@@ -63,44 +53,35 @@ public class AccountController : Controller
     }
 
     [HttpPost]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(Login model)
     {
         if (ModelState.IsValid)
         {
-            var user = await _userManager.FindByEmailAsync(model.Email);
-
+            // Kullanıcıyı e-posta ile bul
+            var user = await _userRepository.GetUserByEmailAsync(model.Email);
             if (user != null)
             {
-                var result = await _signInManager.PasswordSignInAsync(user.UserName, user.PasswordHash, model.RememberMe, lockoutOnFailure: false);
-
-                if (result.Succeeded)
+                // Şifreyi doğrula
+                bool isPasswordValid = BCrypt.Net.BCrypt.Verify(model.Password, user.PasswordHash);
+                if (isPasswordValid)
                 {
-                    return RedirectToAction("Index", "ToDoItem");
+                    // Giriş işlemini gerçekleştir
+                    await _signInManager.SignInAsync(user, isPersistent: model.RememberMe);
+                    return RedirectToAction("Index", "Home");
                 }
             }
-            
-            ModelState.AddModelError(string.Empty, "Giriş başarısız. Lütfen bilgilerinizi kontrol edin.");
-        }
 
+            // Geçersiz giriş denemesi
+            ModelState.AddModelError(string.Empty, "Geçersiz giriş denemesi.");
+        }
         return View(model);
     }
 
 
-    // POST: Account/Logout
     [HttpPost]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
-        // Kullanıcıyı çıkış yaptırma
         await _signInManager.SignOutAsync();
-        return RedirectToAction("Index", "Home");
-    }
-
-    // GET: Account/AccessDenied
-    [HttpGet]
-    public IActionResult AccessDenied()
-    {
-        return View();
+        return RedirectToAction("Login", "Account");
     }
 }

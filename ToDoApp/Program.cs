@@ -18,9 +18,14 @@ builder.Services.AddIdentity<User, IdentityRole<int>>()
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
+    options.Cookie.HttpOnly = true;
+    options.ExpireTimeSpan = TimeSpan.FromDays(30);
     options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
     options.AccessDeniedPath = "/Account/AccessDenied";
+    options.SlidingExpiration = true;
 });
+
 
 // MVC desteği ekleyin
 builder.Services.AddControllersWithViews();
