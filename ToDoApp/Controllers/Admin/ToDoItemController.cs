@@ -1,14 +1,14 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
+
 [Authorize]
 public class ToDoItemController : Controller
 {
     private readonly IToDoItemRepository _repository;
-    private readonly UserManager<User> _userManager; // Kullanıcıyı almak için
+    private readonly UserManager<User> _userManager;
 
     public ToDoItemController(IToDoItemRepository repository, UserManager<User> userManager)
     {
@@ -19,35 +19,20 @@ public class ToDoItemController : Controller
     // GET: ToDoItem
     public async Task<IActionResult> Index()
     {
-        // Giriş yapan kullanıcının ID'sini al
         var user = await _userManager.GetUserAsync(User);
-        if (user == null)
+
+        // Admin kullanıcı tüm item'ları görebilir
+        if (await _userManager.IsInRoleAsync(user, "Admin"))
         {
-            return RedirectToAction("Login", "Account"); // Eğer giriş yapılmadıysa login'e yönlendir
+            var allToDoItems = await _repository.GetAllAsync();
+            return View(allToDoItems);
         }
-
-        // Sadece bu kullanıcının to-do'larını getirin
-        var toDoItems = await _repository.GetToDoItemsByUserIdAsync(user.Id);
-        return View(toDoItems);
-    }
-
-    // GET: ToDoItem/Details/5
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null)
+        else
         {
-            return NotFound();
+            // Normal kullanıcı sadece kendi item'larını görür
+            var userToDoItems = await _repository.GetToDoItemsByUserIdAsync(user.Id);
+            return View(userToDoItems);
         }
-
-        var user = await _userManager.GetUserAsync(User);
-        var toDoItem = await _repository.GetByIdAsync(id.Value);
-
-        if (toDoItem == null || toDoItem.UserId != user.Id)
-        {
-            return NotFound(); // Erişim engellenir
-        }
-
-        return View(toDoItem);
     }
 
     // GET: ToDoItem/Create
@@ -62,28 +47,23 @@ public class ToDoItemController : Controller
     public async Task<IActionResult> Create(ToDoItem toDoItem)
     {
         var user = await _userManager.GetUserAsync(User);
-        if (user == null)
+        toDoItem.UserId = user.Id;
+
+        // Eğer bir son tarih girildiyse, UTC'ye çevir
+        if (toDoItem.DueDate.HasValue)
         {
-            return RedirectToAction("Login", "Account"); // Giriş yapılmadıysa yönlendirin
+            toDoItem.DueDate = DateTime.SpecifyKind(toDoItem.DueDate.Value, DateTimeKind.Utc);
         }
 
         if (ModelState.IsValid)
-        {   
-            if (toDoItem.DueDate.HasValue)
-            {
-                // DueDate'i UTC'ye çevir
-                toDoItem.DueDate = DateTime.SpecifyKind(toDoItem.DueDate.Value, DateTimeKind.Utc);
-            }
-            // Giriş yapan kullanıcının ID'sini toDoItem'a bağla
-            toDoItem.UserId = user.Id;
-
+        {
             await _repository.AddAsync(toDoItem);
             return RedirectToAction(nameof(Index));
         }
-
         return View(toDoItem);
     }
 
+    // GET: ToDoItem/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -91,17 +71,24 @@ public class ToDoItemController : Controller
             return NotFound();
         }
 
-        var user = await _userManager.GetUserAsync(User);
         var toDoItem = await _repository.GetByIdAsync(id.Value);
+        var user = await _userManager.GetUserAsync(User);
 
-        if (toDoItem == null || toDoItem.UserId != user.Id)
+        if (toDoItem == null)
         {
-            return Unauthorized();
+            return NotFound();
+        }
+
+        // Yalnızca admin veya item'in sahibi düzenleme yetkisine sahiptir
+        if (!await _userManager.IsInRoleAsync(user, "Admin") && toDoItem.UserId != user.Id)
+        {
+            return RedirectToAction("AccessDenied", "Account");
         }
 
         return View(toDoItem);
     }
 
+    // POST: ToDoItem/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, ToDoItem toDoItem)
@@ -112,43 +99,25 @@ public class ToDoItemController : Controller
         }
 
         var user = await _userManager.GetUserAsync(User);
-        var existingToDoItem = await _repository.GetByIdAsync(id);
 
-        if (existingToDoItem == null || existingToDoItem.UserId != user.Id)
+        if (!await _userManager.IsInRoleAsync(user, "Admin") && toDoItem.UserId != user.Id)
         {
-            return Unauthorized();
+            return RedirectToAction("AccessDenied", "Account");
+        }
+
+        if (toDoItem.DueDate.HasValue)
+        {
+            toDoItem.DueDate = DateTime.SpecifyKind(toDoItem.DueDate.Value, DateTimeKind.Utc);
         }
 
         if (ModelState.IsValid)
         {
-            try
-            {
-                existingToDoItem.Title = toDoItem.Title;
-                existingToDoItem.Description = toDoItem.Description;
-                existingToDoItem.IsCompleted = toDoItem.IsCompleted;
-                if (toDoItem.DueDate.HasValue)
-                {
-                    existingToDoItem.DueDate = DateTime.SpecifyKind(toDoItem.DueDate.Value, DateTimeKind.Utc);
-                }
-
-                await _repository.UpdateAsync(existingToDoItem);
-                return RedirectToAction(nameof(Index));
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!await _repository.ExistsAsync(toDoItem.Id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            await _repository.UpdateAsync(toDoItem);
+            return RedirectToAction(nameof(Index));
         }
-
         return View(toDoItem);
     }
+
 
     // GET: ToDoItem/Delete/5
     public async Task<IActionResult> Delete(int? id)
@@ -158,41 +127,43 @@ public class ToDoItemController : Controller
             return NotFound();
         }
 
-        var user = await _userManager.GetUserAsync(User);
         var toDoItem = await _repository.GetByIdAsync(id.Value);
+        var user = await _userManager.GetUserAsync(User);
 
-        if (toDoItem == null || toDoItem.UserId != user.Id)
-        {
-            return NotFound(); // Kendi ToDoItem'ı değilse erişim engellenir
-        }
-
-        return View(toDoItem);
-    }
-
-    // POST: ToDoItem/DeleteConfirmed/5
-    [HttpPost, ActionName("DeleteConfirmed")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(int id)
-    {
-        // ToDoItem'ı alıyoruz
-        var toDoItem = await _repository.GetByIdAsync(id);
-        
         if (toDoItem == null)
         {
             return NotFound();
         }
 
-        // Giriş yapmış kullanıcının Id'sini alıyoruz
-        var user = await _userManager.GetUserAsync(User);
-
-        if (user == null || toDoItem.UserId != user.Id)
+        // Admin değilse ve item kullanıcıya ait değilse, yetkisiz erişim
+        if (!await _userManager.IsInRoleAsync(user, "Admin") && toDoItem.UserId != user.Id)
         {
-            return Unauthorized(); // Eğer kullanıcı giriş yapmamışsa veya yetkisi yoksa
+            return Forbid();
         }
 
-        // ToDoItem'ı siliyoruz
-        await _repository.DeleteAsync(id);
+        return View(toDoItem);
+    }
 
+    // POST: ToDoItem/Delete/5
+    [HttpPost, ActionName("DeleteConfirmed")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        var toDoItem = await _repository.GetByIdAsync(id);
+        var user = await _userManager.GetUserAsync(User);
+
+        if (toDoItem == null)
+        {
+            return NotFound();
+        }
+
+        // Admin değilse ve item kullanıcıya ait değilse, yetkisiz erişim
+        if (!await _userManager.IsInRoleAsync(user, "Admin") && toDoItem.UserId != user.Id)
+        {
+            return Forbid();
+        }
+
+        await _repository.DeleteAsync(id);
         return RedirectToAction(nameof(Index));
     }
 }

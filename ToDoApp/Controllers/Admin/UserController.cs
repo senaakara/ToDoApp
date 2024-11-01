@@ -1,33 +1,39 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 using System.Collections.Generic;
 
 public class UserController : Controller
 {
-    private readonly IUserRepository _repository;
+    private readonly UserManager<User> _userManager;
+    private readonly RoleManager<IdentityRole<int>> _roleManager;
 
-    public UserController(IUserRepository repository)
+    public UserController(UserManager<User> userManager, RoleManager<IdentityRole<int>> roleManager)
     {
-        _repository = repository;
+        _userManager = userManager;
+        _roleManager = roleManager;
     }
 
     // Kullanıcıları listelemek için sayfa
     public async Task<IActionResult> Index()
     {
-        var users = await _repository.GetAllAsync();
+        var users = _userManager.Users;
         return View(users);  // Razor view'a 'users' verisi gönderilir
     }
 
     // Kullanıcı detay sayfası
     public async Task<IActionResult> Details(int id)
     {
-        var user = await _repository.GetByIdAsync(id);
+        var user = await _userManager.FindByIdAsync(id.ToString());
         if (user == null)
         {
             return NotFound();
         }
 
-        return View(user);  // Razor view'a 'user' verisi gönderilir
+        var roles = await _userManager.GetRolesAsync(user);
+        ViewBag.Roles = roles;
+
+        return View(user);  // Razor view'a 'user' verisi ve rolleri gönderilir
     }
 
     // Yeni kullanıcı oluşturma sayfası (GET)
@@ -39,53 +45,86 @@ public class UserController : Controller
     // Yeni kullanıcı oluşturma (POST)
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(User user)
+    public async Task<IActionResult> Create(User user, string password)
     {
         if (ModelState.IsValid)
         {
-            await _repository.AddAsync(user); // Veritabanına kullanıcı eklenir
-            return RedirectToAction(nameof(Index)); // Başarılı olursa listeye geri yönlendirir
+            var result = await _userManager.CreateAsync(user, password);
+            if (result.Succeeded)
+            {
+                // Varsayılan olarak "User" rolünü atayın
+                await _userManager.AddToRoleAsync(user, "User");
+                return RedirectToAction(nameof(Index));
+            }
+            else
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+            }
         }
 
-        return View(user); // Hatalıysa form tekrar yüklenir
+        return View(user);
     }
-
 
     // Kullanıcı düzenleme sayfası (GET)
     public async Task<IActionResult> Edit(int id)
     {
-        var user = await _repository.GetByIdAsync(id);
+        var user = await _userManager.FindByIdAsync(id.ToString());
         if (user == null)
         {
             return NotFound();
         }
 
-        return View(user);  // Kullanıcı düzenleme sayfasına 'user' verisi gönderilir
+        var roles = await _userManager.GetRolesAsync(user);
+        ViewBag.Roles = roles;
+
+        return View(user);  // Kullanıcı düzenleme sayfasına 'user' verisi ve rolleri gönderilir
     }
 
     // Kullanıcı düzenleme (POST)
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, User user)
+    public async Task<IActionResult> Edit(int id, User updatedUser)
     {
-        if (id != user.Id)
+        if (id != updatedUser.Id)
+        {
+            return NotFound();
+        }
+
+        var user = await _userManager.FindByIdAsync(id.ToString());
+        if (user == null)
         {
             return NotFound();
         }
 
         if (ModelState.IsValid)
         {
-            await _repository.UpdateAsync(user);
-            return RedirectToAction(nameof(Index));  // Düzenleme sonrası listeye dön
+            user.UserName = updatedUser.UserName;
+            user.Email = updatedUser.Email;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (result.Succeeded)
+            {
+                return RedirectToAction(nameof(Index));
+            }
+            else
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+            }
         }
 
-        return View(user);  // Hatalıysa aynı sayfayı döndür ve hataları göster
+        return View(updatedUser);
     }
 
     // Kullanıcı silme sayfası (GET)
     public async Task<IActionResult> Delete(int id)
     {
-        var user = await _repository.GetByIdAsync(id);
+        var user = await _userManager.FindByIdAsync(id.ToString());
         if (user == null)
         {
             return NotFound();
@@ -99,13 +138,13 @@ public class UserController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var user = await _repository.GetByIdAsync(id);
+        var user = await _userManager.FindByIdAsync(id.ToString());
         if (user == null)
         {
             return NotFound();
         }
 
-        await _repository.DeleteAsync(id);
-        return RedirectToAction(nameof(Index));  // Silme işlemi sonrası listeye dön
+        await _userManager.DeleteAsync(user);
+        return RedirectToAction(nameof(Index));
     }
 }

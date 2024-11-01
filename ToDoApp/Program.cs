@@ -47,6 +47,12 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    await SeedData.Initialize(services);
+}
+
 // Swagger middleware'i burada kullanın
 if (app.Environment.IsDevelopment())
 {
@@ -77,3 +83,18 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+async Task SeedRoles(RoleManager<IdentityRole<int>> roleManager)
+{
+    // "User" rolünü oluştur
+    if (!await roleManager.RoleExistsAsync("User"))
+    {
+        await roleManager.CreateAsync(new IdentityRole<int>("User"));
+    }
+
+    // "Admin" rolünü oluştur
+    if (!await roleManager.RoleExistsAsync("Admin"))
+    {
+        await roleManager.CreateAsync(new IdentityRole<int>("Admin"));
+    }
+}
