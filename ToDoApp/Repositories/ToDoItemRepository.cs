@@ -57,6 +57,23 @@ public class ToDoItemRepository : IToDoItemRepository
         return await _context.ToDoItems.Where(t => t.UserId == userId).ToListAsync();
     }
 
+    public async Task<IEnumerable<ToDoItem>> GetAllAsync(bool includeUser = false)
+{
+    if (includeUser)
+    {
+        return await _context.ToDoItems.Include(t => t.User).ToListAsync();
+    }
+    return await _context.ToDoItems.ToListAsync();
+}
+
+public async Task<IEnumerable<ToDoItem>> GetToDoItemsByUserIdAsync(int userId, bool includeUser = false)
+{
+    if (includeUser)
+    {
+        return await _context.ToDoItems.Where(t => t.UserId == userId).Include(t => t.User).ToListAsync();
+    }
+    return await _context.ToDoItems.Where(t => t.UserId == userId).ToListAsync();
+}
 
 
 }

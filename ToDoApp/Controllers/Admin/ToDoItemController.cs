@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 [Authorize]
@@ -20,36 +23,49 @@ public class ToDoItemController : Controller
     public async Task<IActionResult> Index()
     {
         var user = await _userManager.GetUserAsync(User);
+        IEnumerable<ToDoItem> toDoItems;
 
-        // Admin kullanıcı tüm item'ları görebilir
         if (await _userManager.IsInRoleAsync(user, "Admin"))
         {
-            var allToDoItems = await _repository.GetAllAsync();
-            return View(allToDoItems);
+            toDoItems = await _repository.GetAllAsync();
         }
         else
         {
-            // Normal kullanıcı sadece kendi item'larını görür
-            var userToDoItems = await _repository.GetToDoItemsByUserIdAsync(user.Id);
-            return View(userToDoItems);
+            toDoItems = await _repository.GetToDoItemsByUserIdAsync(user.Id);
         }
+
+        return View(toDoItems);
     }
 
     // GET: ToDoItem/Create
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
+        // Admin kullanıcıya kullanıcı seçimi için liste gönderiyoruz
+        var user = await _userManager.GetUserAsync(User);
+        if (await _userManager.IsInRoleAsync(user, "Admin"))
+        {
+            ViewData["Users"] = _userManager.Users.ToList();
+        }
         return View();
     }
 
     // POST: ToDoItem/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(ToDoItem toDoItem)
+    public async Task<IActionResult> Create(ToDoItem toDoItem, int? selectedUserId)
     {
         var user = await _userManager.GetUserAsync(User);
-        toDoItem.UserId = user.Id;
 
-        // Eğer bir son tarih girildiyse, UTC'ye çevir
+        // Kullanıcı bir admin değilse, kendi UserId'sini ekler
+        if (!await _userManager.IsInRoleAsync(user, "Admin"))
+        {
+            toDoItem.UserId = user.Id;
+        }
+        else if (selectedUserId.HasValue)
+        {
+            toDoItem.UserId = selectedUserId.Value;
+        }
+
         if (toDoItem.DueDate.HasValue)
         {
             toDoItem.DueDate = DateTime.SpecifyKind(toDoItem.DueDate.Value, DateTimeKind.Utc);
@@ -79,16 +95,19 @@ public class ToDoItemController : Controller
             return NotFound();
         }
 
-        // Yalnızca admin veya item'in sahibi düzenleme yetkisine sahiptir
-        if (!await _userManager.IsInRoleAsync(user, "Admin") && toDoItem.UserId != user.Id)
+       
+        
+
+        // Admin için kullanıcı seçimi ve kullanıcı bilgilerini göstermek
+        if (await _userManager.IsInRoleAsync(user, "Admin"))
         {
-            return RedirectToAction("AccessDenied", "Account");
+            ViewData["Users"] = _userManager.Users.ToList();
+            ViewData["OwnerUserName"] = (await _userManager.FindByIdAsync(toDoItem.UserId.ToString()))?.UserName;
         }
 
         return View(toDoItem);
     }
 
-    // POST: ToDoItem/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, ToDoItem toDoItem)
@@ -98,27 +117,35 @@ public class ToDoItemController : Controller
             return NotFound();
         }
 
+        // Giriş yapan kullanıcıyı alıyoruz
         var user = await _userManager.GetUserAsync(User);
 
-        if (!await _userManager.IsInRoleAsync(user, "Admin") && toDoItem.UserId != user.Id)
-        {
-            return RedirectToAction("AccessDenied", "Account");
-        }
+        // UserId'nin mevcut kullanıcı olduğundan emin olun
+        toDoItem.UserId = user.Id;
 
         if (toDoItem.DueDate.HasValue)
         {
+            // Bitiş tarihini UTC olarak ayarla
             toDoItem.DueDate = DateTime.SpecifyKind(toDoItem.DueDate.Value, DateTimeKind.Utc);
         }
 
         if (ModelState.IsValid)
         {
-            await _repository.UpdateAsync(toDoItem);
+            try
+            {
+                await _repository.UpdateAsync(toDoItem);
+            }
+            catch (DbUpdateException ex)
+            {
+                ModelState.AddModelError("", "Veritabanına kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.");
+                return View(toDoItem);
+            }
+
             return RedirectToAction(nameof(Index));
         }
+
         return View(toDoItem);
     }
-
-
     // GET: ToDoItem/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
@@ -135,16 +162,16 @@ public class ToDoItemController : Controller
             return NotFound();
         }
 
-        // Admin değilse ve item kullanıcıya ait değilse, yetkisiz erişim
+        // Sadece adminler diğer kullanıcıların öğelerini silebilir, kullanıcı kendi öğesini silebilir
         if (!await _userManager.IsInRoleAsync(user, "Admin") && toDoItem.UserId != user.Id)
         {
-            return Forbid();
+            return Unauthorized();
         }
 
         return View(toDoItem);
     }
 
-    // POST: ToDoItem/Delete/5
+    // POST: ToDoItem/DeleteConfirmed/5
     [HttpPost, ActionName("DeleteConfirmed")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -157,10 +184,10 @@ public class ToDoItemController : Controller
             return NotFound();
         }
 
-        // Admin değilse ve item kullanıcıya ait değilse, yetkisiz erişim
+        // Sadece adminler diğer kullanıcıların öğelerini silebilir, kullanıcı kendi öğesini silebilir
         if (!await _userManager.IsInRoleAsync(user, "Admin") && toDoItem.UserId != user.Id)
         {
-            return Forbid();
+            return Unauthorized();
         }
 
         await _repository.DeleteAsync(id);

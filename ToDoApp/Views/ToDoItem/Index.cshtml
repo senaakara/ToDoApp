@@ -13,6 +13,7 @@
             <th>Açıklama</th>
             <th>Son Tarih</th>
             <th>Durum</th>
+            <th>Oluşturan Kullanıcı</th>
             <th>İşlemler</th>
         </tr>
     </thead>
@@ -34,6 +35,7 @@
                         <span class="badge bg-warning">Tamamlanmadı</span>
                     }
                 </td>
+                <td>@item.User?.UserName</td> <!-- ToDoItem'ın ait olduğu kullanıcı -->
                 <td>
                     <a href="@Url.Action("Edit", "ToDoItem", new { id = item.Id })" class="btn btn-warning btn-sm">Düzenle</a>
                     <a href="@Url.Action("Delete", "ToDoItem", new { id = item.Id })" class="btn btn-danger btn-sm">Sil</a>
