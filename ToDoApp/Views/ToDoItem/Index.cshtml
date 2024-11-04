@@ -13,7 +13,7 @@
             <th>Açıklama</th>
             <th>Son Tarih</th>
             <th>Durum</th>
-            <th>Oluşturan Kullanıcı</th>
+            <th>Oluşturan Kullanıcı ID</th>
             <th>İşlemler</th>
         </tr>
     </thead>
@@ -24,7 +24,6 @@
                 <td>@item.Title</td>
                 <td>@item.Description</td>
                 <td>@(item.DueDate.HasValue ? item.DueDate.Value.ToString("yyyy-MM-dd") : "Tarih Yok")</td>
-
                 <td>
                     @if (item.IsCompleted)
                     {
@@ -35,7 +34,7 @@
                         <span class="badge bg-warning">Tamamlanmadı</span>
                     }
                 </td>
-                <td>@item.User?.UserName</td> <!-- ToDoItem'ın ait olduğu kullanıcı -->
+                <td>@item.User?.UserName</td> <!-- Kullanıcı ID'si gösteriliyor -->
                 <td>
                     <a href="@Url.Action("Edit", "ToDoItem", new { id = item.Id })" class="btn btn-warning btn-sm">Düzenle</a>
                     <a href="@Url.Action("Delete", "ToDoItem", new { id = item.Id })" class="btn btn-danger btn-sm">Sil</a>

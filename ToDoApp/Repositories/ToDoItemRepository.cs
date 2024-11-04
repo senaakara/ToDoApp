@@ -13,7 +13,9 @@ public class ToDoItemRepository : IToDoItemRepository
 
     public async Task<IEnumerable<ToDoItem>> GetAllAsync()
     {
-        return await _context.ToDoItems.ToListAsync();
+        return await _context.ToDoItems
+        .Include(t => t.User) // User bilgilerini dahil et
+        .ToListAsync();
     }
 
     public async Task<ToDoItem> GetByIdAsync(int id)
