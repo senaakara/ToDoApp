@@ -51,6 +51,8 @@ public class AccountController : Controller
             {
                 ModelState.AddModelError(string.Empty, error.Description);
             }
+            // Kayıt başarısızsa hataları ekleyin
+            
         }
 
         // Model geçerli değilse veya kullanıcı oluşturulurken hata varsa, formu tekrar göster

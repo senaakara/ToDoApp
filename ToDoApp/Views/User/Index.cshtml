@@ -24,7 +24,6 @@
                 <td>@user.UserName</td>
                 <td>@user.Email</td>
                 <td>
-                    <a href="@Url.Action("Edit", "User", new { id = user.Id })" class="btn btn-warning btn-sm">Düzenle</a>
                     <a href="@Url.Action("Delete", "User", new { id = user.Id })" class="btn btn-danger">Sil</a>
                 </td>
             </tr>
@@ -32,4 +31,3 @@
     </tbody>
 </table>
 
-<a href="@Url.Action("Create", "User")" class="btn btn-success">Yeni Kullanıcı Ekle</a>

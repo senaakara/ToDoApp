@@ -1,36 +1,67 @@
 @model Register
+
 @{
-    Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Kayıt Ol";
 }
 
-@using (Html.BeginForm("Register", "Account", FormMethod.Post))
-{
-    @Html.AntiForgeryToken() <!-- CSRF ataklarına karşı koruma sağlayan token -->
+<h2>Kayıt Ol</h2>
 
-    <div class="form-group">
-        <label asp-for="UserName"></label>
+<form asp-action="Register" method="post">
+    <div class="mb-3">
+        <label asp-for="UserName" class="form-label">Kullanıcı Adı</label>
         <input asp-for="UserName" class="form-control" />
         <span asp-validation-for="UserName" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
-        <label asp-for="Email"></label>
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label">Email</label>
         <input asp-for="Email" class="form-control" />
         <span asp-validation-for="Email" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
-        <label asp-for="Password"></label>
-        <input asp-for="Password" class="form-control" type="password" />
+    <div class="mb-3">
+        <label asp-for="Password" class="form-label">Şifre</label>
+        <div class="input-group">
+            <input asp-for="Password" class="form-control" type="password" id="passwordInput" />
+            <span class="input-group-text">
+                <i id="togglePasswordIcon" class="bi bi-eye-slash" style="cursor: pointer;" onclick="togglePasswordVisibility('passwordInput', 'togglePasswordIcon')"></i>
+            </span>
+        </div>
         <span asp-validation-for="Password" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
-        <label asp-for="ConfirmPassword"></label>
-        <input asp-for="ConfirmPassword" class="form-control" type="password" />
+    <div class="mb-3">
+        <label asp-for="ConfirmPassword" class="form-label">Şifreyi Doğrula</label>
+        <div class="input-group">
+            <input asp-for="ConfirmPassword" class="form-control" type="password" id="confirmPasswordInput" />
+            <span class="input-group-text">
+                <i id="toggleConfirmPasswordIcon" class="bi bi-eye-slash" style="cursor: pointer;" onclick="togglePasswordVisibility('confirmPasswordInput', 'toggleConfirmPasswordIcon')"></i>
+            </span>
+        </div>
         <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
     </div>
 
-    <button type="submit" class="btn btn-primary">Kayıt Ol</button>
+    <button type="submit" class="btn btn-primary mt-3">Kayıt Ol</button>
+</form>
+
+<div>
+    <a asp-action="Login" class="btn btn-secondary mt-3">Giriş Yap</a>
+</div>
+
+@section Scripts {
+    <script>
+        function togglePasswordVisibility(inputId, iconId) {
+            var passwordInput = document.getElementById(inputId);
+            var icon = document.getElementById(iconId);
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                icon.classList.remove("bi-eye-slash");
+                icon.classList.add("bi-eye");
+            } else {
+                passwordInput.type = "password";
+                icon.classList.remove("bi-eye");
+                icon.classList.add("bi-eye-slash");
+            }
+        }
+    </script>
 }
